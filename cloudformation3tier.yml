@@ -1,0 +1,584 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: AWS CloudFormation for 3 Tier App
+Parameters:
+  MyImageId:
+    Type: 'AWS::EC2::Image::Id'
+    Default: ami-0970010f37c4f9c8d
+  VPCCidr:
+    Type: String
+    Default: 10.23.0.0/16
+  PublicSubnets:
+    Type: CommaDelimitedList
+    Default: '10.23.1.0/24,10.23.2.0/24,10.23.3.0/24'
+  PrivateSubnets:
+    Type: CommaDelimitedList
+    Default: '10.23.4.0/24,10.23.5.0/24,10.23.6.0/24'
+  DataSubnets:
+    Type: CommaDelimitedList
+    Default: '10.23.7.0/24,10.23.8.0/24,10.23.9.0/24'
+  MyKeyName:
+    Type: 'AWS::EC2::KeyPair::KeyName'
+  MyInstanceType:
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+      - m1.small
+      - m1.large
+    Description: 'Enter t2.micro, m1.small, or m1.large. Default is t2.micro.'
+  MyDBPassword:
+    NoEcho: 'true'
+    Description: The database admin account password
+    Type: String
+    MinLength: '5'
+    MaxLength: '15'
+    AllowedPattern: '^[a-zA-Z0-9]*$'
+Resources:
+  MyVPC:
+    Type: 'AWS::EC2::VPC'
+    Properties:
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      CidrBlock: !Ref VPCCidr
+      Tags:
+        - Key: Name
+          Value: MyVPC
+  MyPublicSubnet1:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      CidrBlock: !Select 
+        - '0'
+        - PublicSubnets
+      MapPublicIpOnLaunch: true
+      AvailabilityZone: !Select 
+        - '0'
+        - !GetAZs ''
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: Name
+          Value: MyPublicSubnet1
+  MyPublicSubnet2:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      CidrBlock: !Select 
+        - '1'
+        - PublicSubnets
+      MapPublicIpOnLaunch: true
+      AvailabilityZone: !Select 
+        - '1'
+        - !GetAZs ''
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: Name
+          Value: MyPublicSubnet2
+  MyPublicSubnet3:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      CidrBlock: !Select 
+        - '2'
+        - PublicSubnets
+      MapPublicIpOnLaunch: true
+      AvailabilityZone: !Select 
+        - '2'
+        - !GetAZs ''
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: Name
+          Value: MyPublicSubnet3
+  MyPrivateSubnet1:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      CidrBlock: !Select 
+        - '0'
+        - PrivateSubnets
+      MapPublicIpOnLaunch: false
+      AvailabilityZone: !Select 
+        - '0'
+        - !GetAZs ''
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: Name
+          Value: MyPrivateSubnet1
+  MyPrivateSubnet2:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      CidrBlock: !Select 
+        - '1'
+        - PrivateSubnets
+      MapPublicIpOnLaunch: false
+      AvailabilityZone: !Select 
+        - '1'
+        - !GetAZs ''
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: Name
+          Value: MyPrivateSubnet2
+  MyPrivateSubnet3:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      CidrBlock: !Select 
+        - '2'
+        - PrivateSubnets
+      MapPublicIpOnLaunch: false
+      AvailabilityZone: !Select 
+        - '2'
+        - !GetAZs ''
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: Name
+          Value: MyPrivateSubnet3
+  MyDataSubnet1:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      CidrBlock: !Select 
+        - '0'
+        - DataSubnets
+      MapPublicIpOnLaunch: false
+      AvailabilityZone: !Select 
+        - '0'
+        - !GetAZs ''
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: Name
+          Value: MyDataSubnet1
+  MyDataSubnet2:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      CidrBlock: !Select 
+        - '1'
+        - DataSubnets
+      MapPublicIpOnLaunch: false
+      AvailabilityZone: !Select 
+        - '1'
+        - !GetAZs ''
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: Name
+          Value: MyDataSubnet2
+  MyDataSubnet3:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      CidrBlock: !Select 
+        - '2'
+        - DataSubnets
+      MapPublicIpOnLaunch: false
+      AvailabilityZone: !Select 
+        - '2'
+        - !GetAZs ''
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: Name
+          Value: MyDataSubnet3
+  MyInternetGateway:
+    Type: 'AWS::EC2::InternetGateway'
+    Properties:
+      Tags:
+        - Key: Name
+          Value: MyInternetGateway
+  MyVPCGatewayAttachment:
+    Type: 'AWS::EC2::VPCGatewayAttachment'
+    Properties:
+      VpcId: !Ref MyVPC
+      InternetGatewayId: !Ref MyInternetGateway
+  MyPublicRouteTable:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: Name
+          Value: MyPublicRouteTable
+  MyPrivateRouteTable:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: Name
+          Value: MyPrivateRouteTable
+  MyPublicRoute:
+    Type: 'AWS::EC2::Route'
+    DependsOn: MyVPCGatewayAttachment
+    Properties:
+      RouteTableId: !Ref MyPublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref MyInternetGateway
+  MyPrivateRoute:
+    Type: 'AWS::EC2::Route'
+    DependsOn: MyNAT
+    Properties:
+      RouteTableId: !Ref MyPrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref MyNAT
+  MyPublicSubnetRouteTableAssociation1:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref MyPublicSubnet1
+      RouteTableId: !Ref MyPublicRouteTable
+  MyPublicSubnetRouteTableAssociation2:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref MyPublicSubnet2
+      RouteTableId: !Ref MyPublicRouteTable
+  MyPublicSubnetRouteTableAssociation3:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref MyPublicSubnet3
+      RouteTableId: !Ref MyPublicRouteTable
+  MyPrivateSubnetRouteTableAssociation1:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref MyPrivateSubnet1
+      RouteTableId: !Ref MyPrivateRouteTable
+  MyPrivateSubnetRouteTableAssociation2:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref MyPrivateSubnet2
+      RouteTableId: !Ref MyPrivateRouteTable
+  MyPrivateSubnetRouteTableAssociation3:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref MyPrivateSubnet3
+      RouteTableId: !Ref MyPrivateRouteTable
+  MyPublicNetworkAcl:
+    Type: 'AWS::EC2::NetworkAcl'
+    Properties:
+      VpcId: !Ref MyVPC
+  MyPublicNACLInboundRule:
+    Type: 'AWS::EC2::NetworkAclEntry'
+    Properties:
+      NetworkAclId: !Ref MyPublicNetworkAcl
+      RuleNumber: 100
+      Protocol: -1
+      RuleAction: allow
+      CidrBlock: 0.0.0.0/0
+  MyPublicNACLOutboundRule:
+    Type: 'AWS::EC2::NetworkAclEntry'
+    Properties:
+      NetworkAclId: !Ref MyNACL
+      RuleNumber: 100
+      Protocol: -1
+      Egress: true
+      RuleAction: allow
+      CidrBlock: 0.0.0.0/0
+  MyPublicSubnet1NetworkAclAssociation:
+    Type: 'AWS::EC2::SubnetNetworkAclAssociation'
+    Properties:
+      SubnetId: !Ref MyPublicSubnet1
+      NetworkAclId: !Ref MyPublicNetworkAcl
+  MyPublicSubnet2NetworkAclAssociation:
+    Type: 'AWS::EC2::SubnetNetworkAclAssociation'
+    Properties:
+      SubnetId: !Ref MyPublicSubnet2
+      NetworkAclId: !Ref MyPublicNetworkAcl
+  MyPublicSubnet3NetworkAclAssociation:
+    Type: 'AWS::EC2::SubnetNetworkAclAssociation'
+    Properties:
+      SubnetId: !Ref MyPublicSubnet3
+      NetworkAclId: !Ref MyPublicNetworkAcl
+  MyNAT:
+    Type: 'AWS::EC2::NatGateway'
+    Properties:
+      AllocationId: !GetAtt 
+        - MyEIP
+        - AllocationId
+      SubnetId: !Ref MyPrivateSubnet1
+      Tags:
+        - Key: Name
+          Value: MyNAT
+  MyEIP:
+    DependsOn: MyVPCGatewayAttachment
+    Type: 'AWS::EC2::EIP'
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: MyEIP
+  MyWebServerLaunchTemplate:
+    Type: 'AWS::EC2::LaunchTemplate'
+    Properties:
+      LaunchTemplateName: MyWebServerLaunchTemplate
+      LaunchTemplateData:
+        ImageId: !Ref MyImageId
+        KeyName: !Ref MyKeyName
+        InstanceType: !Ref MyInstanceType
+        UserData: !Base64 
+          'Fn::Join':
+            - ''
+            - - |
+                #!/bin/bash -xe
+              - |
+                sudo yum update -y
+              - |
+                sudo yum install httpd -y
+              - |
+                sudo systemctl start httpd
+              - |
+                sudo chmod -fR 777 /var/www/html/
+              - >
+                instanceid="`curl
+                http://169.254.169.254/latest/meta-data/ami-id`"
+              - >
+                sudo echo "Hello World from user data for the instance
+                ${instanceid}" > /var/www/html/index.html
+              - // rules to connect to App Server
+        SecurityGroupIds:
+          - !Ref MyASGSecurityGroup
+  MyWebServerASG:
+    Type: 'AWS::AutoScaling::AutoScalingGroup'
+    DependsOn: MyVPCGatewayAttachment
+    Properties:
+      AutoScalingGroupName: MyWebServerASG
+      MaxSize: 4
+      MinSize: 2
+      DesiredCapacity: 2
+      HealthCheckGracePeriod: 300
+      LaunchTemplate:
+        LaunchTemplateId: !Ref MyWebServerLaunchTemplate
+        Version: !GetAtt 
+          - MyWebServerLaunchTemplate
+          - LatestVersionNumber
+      VPCZoneIdentifier:
+        - !Ref MyPublicSubnet1
+        - !Ref MyPublicSubnet2
+        - !Ref MyPublicSubnet3
+      TargetGroupARNs:
+        - !Ref MyELBTarget
+      Tags:
+        - Key: Name
+          Value: MyWebServerASG
+          PropagateAtLaunch: true
+  MyELB:
+    Type: 'AWS::ElasticLoadBalancingV2::LoadBalancer'
+    Properties:
+      IpAddressType: ipv4
+      Scheme: internet-facing
+      Name: MyELB
+      SecurityGroups:
+        - !Ref MyASGSecurityGroup
+      Subnets:
+        - !Ref MyPublicSubnet1
+        - !Ref MyPublicSubnet2
+        - !Ref MyPublicSubnet3
+      Tags:
+        - Key: Name
+          Value: MyELB
+  MyELBTarget:
+    Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
+    Properties:
+      Name: MyELBTarget
+      HealthCheckEnabled: true
+      HealthCheckIntervalSeconds: 10
+      HealthCheckPath: /
+      HealthCheckPort: 80
+      Protocol: HTTP
+      Port: 80
+      VpcId: !Ref MyVPC
+      TargetType: instance
+      Tags:
+        - Key: Name
+          Value: MyELBTarget
+  MyELBListener:
+    Type: 'AWS::ElasticLoadBalancingV2::Listener'
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref MyELBTarget
+      LoadBalancerArn: !Ref MyELB
+      Port: 80
+      Protocol: HTTP
+  MyASGSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Webserver & Appserver Security Group
+      SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          FromPort: 22
+          IpProtocol: tcp
+          ToPort: 22
+        - CidrIp: 0.0.0.0/0
+          FromPort: 80
+          IpProtocol: tcp
+          ToPort: 80
+        - FromPort: 22
+          IpProtocol: tcp
+          ToPort: 22
+        - FromPort: 80
+          IpProtocol: tcp
+          ToPort: 80
+      VpcId: !Ref MyVPC
+  MyWebserverScaleUpPolicy:
+    Type: 'AWS::AutoScaling::ScalingPolicy'
+    Properties:
+      AdjustmentType: ChangeInCapacity
+      AutoScalingGroupName: !Ref MyWebServerASG
+      PolicyType: SimpleScaling
+      ScalingAdjustment: 1
+  MyWebserverScaleDownPolicy:
+    Type: 'AWS::AutoScaling::ScalingPolicy'
+    Properties:
+      AdjustmentType: ChangeInCapacity
+      AutoScalingGroupName: !Ref MyWebServerASG
+      PolicyType: SimpleScaling
+      ScalingAdjustment: -1
+  MyAppServerScaleUpPolicy:
+    Type: 'AWS::AutoScaling::ScalingPolicy'
+    Properties:
+      AdjustmentType: ChangeInCapacity
+      AutoScalingGroupName: !Ref MyAppServerASG
+      PolicyType: SimpleScaling
+      ScalingAdjustment: 1
+  MyAppServerScaleDownPolicy:
+    Type: 'AWS::AutoScaling::ScalingPolicy'
+    Properties:
+      AdjustmentType: ChangeInCapacity
+      AutoScalingGroupName: !Ref MyAppServerASG
+      PolicyType: SimpleScaling
+      ScalingAdjustment: -1
+  AlarmHighCpu:
+    Type: 'AWS::CloudWatch::Alarm'
+    Properties:
+      ComparisonOperator: GreaterThanThreshold
+      EvaluationPeriods: 2
+      AlarmActions:
+        - !Ref MyWebserverScaleUpPolicy
+        - !Ref MyAppServerScaleUpPolicy
+      MetricName: CPUUtilization
+      Period: 60
+      Statistic: Average
+      Threshold: 50
+      Namespace: AWS/EC2
+  AlarmLowCpu:
+    Type: 'AWS::CloudWatch::Alarm'
+    Properties:
+      ComparisonOperator: LessThanThreshold
+      EvaluationPeriods: 2
+      AlarmActions:
+        - !Ref MyWebserverScaleDownPolicy
+        - !Ref MyAppServerScaleDownPolicy
+      MetricName: CPUUtilization
+      Period: 60
+      Statistic: Average
+      Threshold: 50
+      Namespace: AWS/EC2
+  MyAppServerLaunchTemplate:
+    Type: 'AWS::EC2::LaunchTemplate'
+    Properties:
+      LaunchTemplateName: MyAppServerLaunchTemplate
+      LaunchTemplateData:
+        ImageId: !Ref MyImageId
+        KeyName: !Ref MyKeyName
+        InstanceType: !Ref MyInstanceType
+        UserData: !Base64 
+          'Fn::Join':
+            - ''
+            - - |
+                #!/bin/bash -xe
+              - |
+                sudo yum update -y
+              - |
+                sudo yum install httpd -y
+              - |
+                sudo systemctl start httpd
+              - |
+                sudo chmod -fR 777 /var/www/html/
+              - >
+                instanceid="`curl
+                http://169.254.169.254/latest/meta-data/ami-id`"
+              - >-
+                echo "Hello World from App Server User data for the instance
+                ${instanceid}" > /var/www/html/appserver.html
+        SecurityGroupIds:
+          - !Ref MyASGSecurityGroup
+  MyAppServerASG:
+    Type: 'AWS::AutoScaling::AutoScalingGroup'
+    DependsOn: MyVPCGatewayAttachment
+    Properties:
+      AutoScalingGroupName: MyAppServerASG
+      MaxSize: 4
+      MinSize: 2
+      DesiredCapacity: 2
+      HealthCheckGracePeriod: 300
+      LaunchTemplate:
+        LaunchTemplateId: !Ref MyAppServerLaunchTemplate
+        Version: !GetAtt 
+          - MyAppServerLaunchTemplate
+          - LatestVersionNumber
+      VPCZoneIdentifier:
+        - !Ref MyPrivateSubnet1
+        - !Ref MyPrivateSubnet2
+        - !Ref MyPrivateSubnet3
+      TargetGroupARNs:
+        - !Ref MyAppServerELBTarget
+      Tags:
+        - Key: Name
+          Value: MyAppServerASG
+          PropagateAtLaunch: true
+  MyAppServerELB:
+    Type: 'AWS::ElasticLoadBalancingV2::LoadBalancer'
+    Properties:
+      IpAddressType: ipv4
+      Scheme: internal
+      Name: MyAppServerELB
+      SecurityGroups:
+        - !Ref MyASGSecurityGroup
+      Subnets:
+        - !Ref MyPrivateSubnet1
+        - !Ref MyPrivateSubnet2
+        - !Ref MyPrivateSubnet3
+      Tags:
+        - Key: Name
+          Value: MyAppServerELB
+  MyAppServerELBTarget:
+    Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
+    Properties:
+      Name: MyAppServerELBTarget
+      HealthCheckEnabled: true
+      HealthCheckIntervalSeconds: 10
+      HealthCheckPath: /appserver.html
+      HealthCheckPort: 80
+      Protocol: HTTP
+      Port: 80
+      VpcId: !Ref MyVPC
+      TargetType: instance
+      Tags:
+        - Key: Name
+          Value: MyAppServerELBTarget
+  MyAppServerELBListener:
+    Type: 'AWS::ElasticLoadBalancingV2::Listener'
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref MyAppServerELBTarget
+      LoadBalancerArn: !Ref MyAppServerELB
+      Port: 80
+      Protocol: HTTP
+  MyDBInstance:
+    Type: 'AWS::RDS::DBInstance'
+    Properties:
+      DBName: DB
+      Engine: MySQL
+      MasterUsername: user
+      DBInstanceClass: db.t2.micro
+      AllocatedStorage: '5'
+      MasterUserPassword: supersecret
+      VPCSecurityGroups:
+        - !Ref MyASGSecurityGroup
+      DBSubnetGroupName: !Ref MyDBSubnetGroup
+      MultiAZ: true
+  MyDBSecurityGroup:
+    Type: 'AWS::RDS::DBSecurityGroup'
+    Properties:
+      EC2VpcId: !Ref MyVPC
+      DBSecurityGroupIngress:
+        - EC2SecurityGroupId: !Ref MyASGSecurityGroup
+      GroupDescription: Frontend Access
+  MyDBSubnetGroup:
+    Type: 'AWS::RDS::DBSubnetGroup'
+    Properties:
+      DBSubnetGroupDescription: My DB Subnet Group
+      SubnetIds:
+        - !Ref MyPrivateSubnet1
+        - !Ref MyPrivateSubnet2
+        - !Ref MyPrivateSubnet3
+      Tags:
+        - Key: Name
+          Value: MyDBSubnetGroup

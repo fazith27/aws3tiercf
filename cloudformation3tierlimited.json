@@ -1,0 +1,1065 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "AWS CloudFormation for 3 Tier App",
+  "Parameters": {
+    "MyImageId": {
+      "Type": "AWS::EC2::Image::Id",
+      "Default": "ami-0c2b8ca1dad447f8a"
+    },
+    "TypeOfStack":{
+      "Type": "String",
+      "Default": "MGT"
+    },
+    "MyIp":{
+      "Type": "String",
+      "Default": "119.18.2.15/32"
+    },
+    "VPCCidr": {
+      "Type": "String",
+      "Default": "10.24.0.0/16"
+    },
+    "PublicSubnets": {
+      "Type": "CommaDelimitedList",
+      "Default": "10.24.1.0/24,10.24.2.0/24,10.24.3.0/24"
+    },
+    "PrivateSubnets": {
+      "Type": "CommaDelimitedList",
+      "Default": "10.24.4.0/24,10.24.5.0/24,10.24.6.0/24"
+    },
+    "DataSubnets": {
+      "Type": "CommaDelimitedList",
+      "Default": "10.24.7.0/24,10.24.8.0/24,10.24.9.0/24"
+    },
+    "MyKeyName": {
+      "Type": "AWS::EC2::KeyPair::KeyName"
+    },
+    "MyInstanceType": {
+      "Type": "String",
+      "Default": "t2.micro",
+      "AllowedValues": [
+        "t2.micro",
+        "m1.small",
+        "m1.large"
+      ],
+      "Description": "Enter t2.micro, m1.small, or m1.large. Default is t2.micro."
+    }
+  },
+  "Resources": {
+    "MyVPC": {
+      "Type": "AWS::EC2::VPC",
+      "Properties": {
+        "EnableDnsSupport": "true",
+        "EnableDnsHostnames": "true",
+        "CidrBlock": {
+          "Ref": "VPCCidr"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": { "Fn::Sub": "${TypeOfStack}-VPC" }
+          }
+        ]
+      }
+    },
+    "MyPublicSubnet1": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "CidrBlock": {
+          "Fn::Select": [
+            0,
+            {
+              "Ref": "PublicSubnets"
+            }
+          ]
+        },
+        "MapPublicIpOnLaunch": true,
+        "AvailabilityZone": {
+          "Fn::Select": [
+            0,
+            {
+              "Fn::GetAZs": ""
+            }
+          ]
+        },
+        "VpcId": {
+          "Ref": "MyVPC"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": { "Fn::Sub": "${TypeOfStack}-MyPublicSubnet1" }
+          }
+        ]
+      }
+    },
+    "MyPublicSubnet2": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "CidrBlock": {
+          "Fn::Select": [
+            1,
+            {
+              "Ref": "PublicSubnets"
+            }
+          ]
+        },
+        "MapPublicIpOnLaunch": true,
+        "AvailabilityZone": {
+          "Fn::Select": [
+            1,
+            {
+              "Fn::GetAZs": ""
+            }
+          ]
+        },
+        "VpcId": {
+          "Ref": "MyVPC"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": { "Fn::Sub": "${TypeOfStack}-MyPublicSubnet2" }
+          }
+        ]
+      }
+    },
+    "MyPublicSubnet3": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "CidrBlock": {
+          "Fn::Select": [
+            2,
+            {
+              "Ref": "PublicSubnets"
+            }
+          ]
+        },
+        "MapPublicIpOnLaunch": true,
+        "AvailabilityZone": {
+          "Fn::Select": [
+            2,
+            {
+              "Fn::GetAZs": ""
+            }
+          ]
+        },
+        "VpcId": {
+          "Ref": "MyVPC"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": { "Fn::Sub": "${TypeOfStack}-MyPublicSubnet3" }
+          }
+        ]
+      }
+    },
+    "MyPrivateSubnet1": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "CidrBlock": {
+          "Fn::Select": [
+            0,
+            {
+              "Ref": "PrivateSubnets"
+            }
+          ]
+        },
+        "MapPublicIpOnLaunch": false,
+        "AvailabilityZone": {
+          "Fn::Select": [
+            0,
+            {
+              "Fn::GetAZs": ""
+            }
+          ]
+        },
+        "VpcId": {
+          "Ref": "MyVPC"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": { "Fn::Sub": "${TypeOfStack}-MyPrivateSubnet1" }
+          }
+        ]
+      }
+    },
+    "MyPrivateSubnet2": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "CidrBlock": {
+          "Fn::Select": [
+            1,
+            {
+              "Ref": "PrivateSubnets"
+            }
+          ]
+        },
+        "MapPublicIpOnLaunch": false,
+        "AvailabilityZone": {
+          "Fn::Select": [
+            1,
+            {
+              "Fn::GetAZs": ""
+            }
+          ]
+        },
+        "VpcId": {
+          "Ref": "MyVPC"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": { "Fn::Sub": "${TypeOfStack}-MyPrivateSubnet2" }
+          }
+        ]
+      }
+    },
+    "MyPrivateSubnet3": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "CidrBlock": {
+          "Fn::Select": [
+            2,
+            {
+              "Ref": "PrivateSubnets"
+            }
+          ]
+        },
+        "MapPublicIpOnLaunch": false,
+        "AvailabilityZone": {
+          "Fn::Select": [
+            2,
+            {
+              "Fn::GetAZs": ""
+            }
+          ]
+        },
+        "VpcId": {
+          "Ref": "MyVPC"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": { "Fn::Sub": "${TypeOfStack}-MyPrivateSubnet3" }
+          }
+        ]
+      }
+    },
+    "MyDataSubnet1": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "CidrBlock": {
+          "Fn::Select": [
+            0,
+            {
+              "Ref": "DataSubnets"
+            }
+          ]
+        },
+        "MapPublicIpOnLaunch": false,
+        "AvailabilityZone": {
+          "Fn::Select": [
+            0,
+            {
+              "Fn::GetAZs": ""
+            }
+          ]
+        },
+        "VpcId": {
+          "Ref": "MyVPC"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": { "Fn::Sub": "${TypeOfStack}-MyDataSubnet1" }
+          }
+        ]
+      }
+    },
+    "MyDataSubnet2": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "CidrBlock": {
+          "Fn::Select": [
+            1,
+            {
+              "Ref": "DataSubnets"
+            }
+          ]
+        },
+        "MapPublicIpOnLaunch": false,
+        "AvailabilityZone": {
+          "Fn::Select": [
+            1,
+            {
+              "Fn::GetAZs": ""
+            }
+          ]
+        },
+        "VpcId": {
+          "Ref": "MyVPC"
+        },
+        "Tags": [
+          {
+            "Key": "Name","Value": { "Fn::Sub": "${TypeOfStack}-MyDataSubnet2" }
+          }
+        ]
+      }
+    },
+    "MyDataSubnet3": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "CidrBlock": {
+          "Fn::Select": [
+            2,
+            {
+              "Ref": "DataSubnets"
+            }
+          ]
+        },
+        "MapPublicIpOnLaunch": false,
+        "AvailabilityZone": {
+          "Fn::Select": [
+            2,
+            {
+              "Fn::GetAZs": ""
+            }
+          ]
+        },
+        "VpcId": {
+          "Ref": "MyVPC"
+        },
+        "Tags": [
+          {
+            "Key": "Name","Value": { "Fn::Sub": "${TypeOfStack}-MyDataSubnet3" }
+          }
+        ]
+      }
+    },
+    "MyInternetGateway": {
+      "Type": "AWS::EC2::InternetGateway",
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name","Value": { "Fn::Sub": "${TypeOfStack}-MyInternetGateway" }
+          }
+        ]
+      }
+    },
+    "MyVPCGatewayAttachment": {
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+      "Properties": {
+        "VpcId": {
+          "Ref": "MyVPC"
+        },
+        "InternetGatewayId": {
+          "Ref": "MyInternetGateway"
+        }
+      }
+    },
+    "MyPublicRouteTable": {
+      "Type": "AWS::EC2::RouteTable",
+      "Properties": {
+        "VpcId": {
+          "Ref": "MyVPC"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": { "Fn::Sub": "${TypeOfStack}-MyPublicRouteTable" }
+          }
+        ]
+      }
+    },
+    "MyPrivateRouteTable": {
+      "Type": "AWS::EC2::RouteTable",
+      "Properties": {
+        "VpcId": {
+          "Ref": "MyVPC"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": { "Fn::Sub": "${TypeOfStack}-MyPrivateRouteTable" }
+          }
+        ]
+      }
+    },
+    "MyPublicRoute": {
+      "Type": "AWS::EC2::Route",
+      "DependsOn": "MyVPCGatewayAttachment",
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "MyPublicRouteTable"
+        },
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "MyInternetGateway"
+        }
+      }
+    },
+    "MyPrivateRoute": {
+      "Type": "AWS::EC2::Route",
+      "DependsOn": "MyNAT",
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "MyPrivateRouteTable"
+        },
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": {
+          "Ref": "MyNAT"
+        }
+      }
+    },
+    "MyPublicSubnetRouteTableAssociation1": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "SubnetId": {
+          "Ref": "MyPublicSubnet1"
+        },
+        "RouteTableId": {
+          "Ref": "MyPublicRouteTable"
+        }
+      }
+    },
+    "MyPublicSubnetRouteTableAssociation2": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "SubnetId": {
+          "Ref": "MyPublicSubnet2"
+        },
+        "RouteTableId": {
+          "Ref": "MyPublicRouteTable"
+        }
+      }
+    },
+    "MyPublicSubnetRouteTableAssociation3": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "SubnetId": {
+          "Ref": "MyPublicSubnet3"
+        },
+        "RouteTableId": {
+          "Ref": "MyPublicRouteTable"
+        }
+      }
+    },
+    "MyPrivateSubnetRouteTableAssociation1": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "SubnetId": {
+          "Ref": "MyPrivateSubnet1"
+        },
+        "RouteTableId": {
+          "Ref": "MyPrivateRouteTable"
+        }
+      }
+    },
+    "MyPrivateSubnetRouteTableAssociation2": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "SubnetId": {
+          "Ref": "MyPrivateSubnet2"
+        },
+        "RouteTableId": {
+          "Ref": "MyPrivateRouteTable"
+        }
+      }
+    },
+    "MyPrivateSubnetRouteTableAssociation3": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "SubnetId": {
+          "Ref": "MyPrivateSubnet3"
+        },
+        "RouteTableId": {
+          "Ref": "MyPrivateRouteTable"
+        }
+      }
+    },
+    "MyPublicNetworkAcl": {
+      "Type": "AWS::EC2::NetworkAcl",
+      "Properties": {
+        "VpcId": {
+          "Ref": "MyVPC"
+        }
+      }
+    },
+    "MyPublicNACLInboundRule": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "Properties": {
+        "NetworkAclId": {
+          "Ref": "MyPublicNetworkAcl"
+        },
+        "RuleNumber": 100,
+        "Protocol": -1,
+        "RuleAction": "allow",
+        "CidrBlock": "0.0.0.0/0"
+      }
+    },
+    "MyPublicNACLOutboundRule": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "Properties": {
+        "NetworkAclId": {
+          "Ref": "MyPublicNetworkAcl"
+        },
+        "RuleNumber": 100,
+        "Protocol": -1,
+        "Egress": true,
+        "RuleAction": "allow",
+        "CidrBlock": "0.0.0.0/0"
+      }
+    },
+    "MyPublicSubnet1NetworkAclAssociation": {
+      "Type": "AWS::EC2::SubnetNetworkAclAssociation",
+      "Properties": {
+        "SubnetId": {
+          "Ref": "MyPublicSubnet1"
+        },
+        "NetworkAclId": {
+          "Ref": "MyPublicNetworkAcl"
+        }
+      }
+    },
+    "MyPublicSubnet2NetworkAclAssociation": {
+      "Type": "AWS::EC2::SubnetNetworkAclAssociation",
+      "Properties": {
+        "SubnetId": {
+          "Ref": "MyPublicSubnet2"
+        },
+        "NetworkAclId": {
+          "Ref": "MyPublicNetworkAcl"
+        }
+      }
+    },
+    "MyPublicSubnet3NetworkAclAssociation": {
+      "Type": "AWS::EC2::SubnetNetworkAclAssociation",
+      "Properties": {
+        "SubnetId": {
+          "Ref": "MyPublicSubnet3"
+        },
+        "NetworkAclId": {
+          "Ref": "MyPublicNetworkAcl"
+        }
+      }
+    },
+    "MyNAT": {
+      "Type": "AWS::EC2::NatGateway",
+      "Properties": {
+        "AllocationId": {
+          "Fn::GetAtt": [
+            "MyEIP",
+            "AllocationId"
+          ]
+        },
+        "SubnetId": {
+          "Ref": "MyPrivateSubnet1"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": { "Fn::Sub": "${TypeOfStack}-MyNAT" }
+          }
+        ]
+      }
+    },
+    "MyEIP": {
+      "DependsOn": "MyVPCGatewayAttachment",
+      "Type": "AWS::EC2::EIP",
+      "Properties": {
+        "Domain": "vpc",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": { "Fn::Sub": "${TypeOfStack}-MyEIP" }
+          }
+        ]
+      }
+    },
+    "MyWebServerLaunchTemplate": {
+      "Type": "AWS::EC2::LaunchTemplate",
+      "Properties": {
+        "LaunchTemplateName": { "Fn::Sub": "${TypeOfStack}-MyWebServerLaunchTemplate" },
+        "LaunchTemplateData": {
+          "ImageId": {
+            "Ref": "MyImageId"
+          },
+          "KeyName": {
+            "Ref": "MyKeyName"
+          },
+          "InstanceType": {
+            "Ref": "MyInstanceType"
+          },
+          "UserData": {
+            "Fn::Base64": {
+              "Fn::Join": [
+                "",
+                [
+                  "#!/bin/bash -xe\n",
+                  "sudo yum update -y\n",
+                  "sudo yum install httpd -y\n",
+                  "sudo systemctl start httpd\n",
+                  "sudo chmod -fR 777 /var/www/html/\n",
+                  "instanceid=\"`curl http://169.254.169.254/latest/dynamic/instance-identity/document`\"\n",
+                  "sudo echo \"EC2 Metadata\" > /var/www/html/index.html\n",
+                  "sudo echo \"${instanceid}\" >> /var/www/html/index.html\n",
+                  "// rules to connect to App Server"
+                ]
+              ]
+            }
+          },
+          "SecurityGroupIds": [
+            {
+              "Ref": "MyWebServerASGSecurityGroup"
+            }
+          ]
+        }
+      }
+    },
+    "MyWebServerASG": {
+      "Type": "AWS::AutoScaling::AutoScalingGroup",
+      "DependsOn": "MyVPCGatewayAttachment",
+      "Properties": {
+        "AutoScalingGroupName": { "Fn::Sub": "${TypeOfStack}-MyWebServerASG" },
+        "MaxSize": 1,
+        "MinSize": 1,
+        "DesiredCapacity": 1,
+        "HealthCheckGracePeriod": 300,
+        "LaunchTemplate": {
+          "LaunchTemplateId": {
+            "Ref": "MyWebServerLaunchTemplate"
+          },
+          "Version": {
+            "Fn::GetAtt": [
+              "MyWebServerLaunchTemplate",
+              "LatestVersionNumber"
+            ]
+          }
+        },
+        "VPCZoneIdentifier": [
+          {
+            "Ref": "MyPublicSubnet1"
+          },
+          {
+            "Ref": "MyPublicSubnet2"
+          },
+          {
+            "Ref": "MyPublicSubnet3"
+          }
+        ],
+        "TargetGroupARNs": [
+          {
+            "Ref": "MyWebServerELBTarget"
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": { "Fn::Sub": "${TypeOfStack}-MyWebServerASG" },
+            "PropagateAtLaunch": true
+          }
+        ]
+      }
+    },
+    "MyWebserverELB": {
+      "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
+      "Properties": {
+        "IpAddressType": "ipv4",
+        "Scheme": "internet-facing",
+        "Name": { "Fn::Sub": "${TypeOfStack}-MyWebserverELB" },
+        "SecurityGroups": [
+          {
+            "Ref": "MyWebServerELBSecurityGroup"
+          }
+        ],
+        "Subnets": [
+          {
+            "Ref": "MyPublicSubnet1"
+          },
+          {
+            "Ref": "MyPublicSubnet2"
+          },
+          {
+            "Ref": "MyPublicSubnet3"
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": { "Fn::Sub": "${TypeOfStack}-MyWebserverELB" }
+          }
+        ]
+      }
+    },
+    "MyWebServerELBTarget": {
+      "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+      "Properties": {
+        "Name": { "Fn::Sub": "${TypeOfStack}-MyWebServerELBTarget" },
+        "HealthCheckEnabled": true,
+        "HealthCheckIntervalSeconds": 10,
+        "HealthCheckPath": "/",
+        "HealthCheckPort": 80,
+        "Protocol": "HTTP",
+        "Port": 80,
+        "VpcId": {
+          "Ref": "MyVPC"
+        },
+        "TargetType": "instance",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": { "Fn::Sub": "${TypeOfStack}-MyWebServerELBTarget" }
+          }
+        ]
+      }
+    },
+    "MyWebserverELBListener": {
+      "Type": "AWS::ElasticLoadBalancingV2::Listener",
+      "Properties": {
+        "DefaultActions": [
+          {
+            "Type": "forward",
+            "TargetGroupArn": {
+              "Ref": "MyWebServerELBTarget"
+            }
+          }
+        ],
+        "LoadBalancerArn": {
+          "Ref": "MyWebserverELB"
+        },
+        "Port": 80,
+        "Protocol": "HTTP"
+      }
+    },
+    "MyWebServerASGSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Webserver Security Group",
+        "SecurityGroupIngress": [
+          {
+            "SourceSecurityGroupId": {
+              "Ref": "MyWebServerELBSecurityGroup"
+            },
+            "FromPort": 80,
+            "IpProtocol": "tcp",
+            "ToPort": 80
+          }
+        ],
+        "VpcId": {
+          "Ref": "MyVPC"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": { "Fn::Sub": "${TypeOfStack}-WebserverSecurityGroup" }
+          }
+        ]
+      }
+    },
+    "MyWebServerELBSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Webserver ELB Security Group",
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "FromPort": 80,
+            "IpProtocol": "tcp",
+            "ToPort": 80
+          }
+        ],
+        "VpcId": {
+          "Ref": "MyVPC"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": { "Fn::Sub": "${TypeOfStack}-WebserverELBSecurityGroup" }
+          }
+        ]
+      }
+    },
+    "MyAppServerASGSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Appserver Security Group",
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Ref": "VPCCidr"
+            },
+            "FromPort": 22,
+            "IpProtocol": "tcp",
+            "ToPort": 22
+          },
+          {
+            "SourceSecurityGroupId": {
+              "Ref": "MyWebServerASGSecurityGroup"
+            },
+            "FromPort": 80,
+            "IpProtocol": "tcp",
+            "ToPort": 80
+          },
+          {
+            "CidrIp": {
+              "Ref": "VPCCidr"
+            },
+            "FromPort": 80,
+            "IpProtocol": "tcp",
+            "ToPort": 80
+          }
+        ],
+        "VpcId": {
+          "Ref": "MyVPC"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": { "Fn::Sub": "${TypeOfStack}-AppServerSecurityGroup" }
+          }
+        ]
+      }
+    },
+    "MyAppServerLaunchTemplate": {
+      "Type": "AWS::EC2::LaunchTemplate",
+      "Properties": {
+        "LaunchTemplateName": { "Fn::Sub": "${TypeOfStack}-MyAppServerLaunchTemplate" },
+        "LaunchTemplateData": {
+          "ImageId": {
+            "Ref": "MyImageId"
+          },
+          "KeyName": {
+            "Ref": "MyKeyName"
+          },
+          "InstanceType": {
+            "Ref": "MyInstanceType"
+          },
+          "UserData": {
+            "Fn::Base64": {
+              "Fn::Join": [
+                "",
+                [
+                  "#!/bin/bash -xe\n",
+                  "sudo yum update -y\n",
+                  "sudo yum install httpd -y\n",
+                  "sudo systemctl start httpd\n",
+                  "sudo chmod -fR 777 /var/www/html/\n",
+                  "instanceid=\"`curl http://169.254.169.254/latest/dynamic/instance-identity/document`\"\n",
+                  "sudo echo \"EC2 Metadata\" > /var/www/html/index.html\n",
+                  "sudo echo \"${instanceid}\" >> /var/www/html/index.html\n"
+                ]
+              ]
+            }
+          },
+          "SecurityGroupIds": [
+            {
+              "Ref": "MyAppServerASGSecurityGroup"
+            }
+          ]
+        }
+      }
+    },
+    "MyAppServerASG": {
+      "Type": "AWS::AutoScaling::AutoScalingGroup",
+      "DependsOn": "MyVPCGatewayAttachment",
+      "Properties": {
+        "AutoScalingGroupName": { "Fn::Sub": "${TypeOfStack}-MyAppServerASG" },
+        "MaxSize": 1,
+        "MinSize": 1,
+        "DesiredCapacity": 1,
+        "HealthCheckGracePeriod": 300,
+        "LaunchTemplate": {
+          "LaunchTemplateId": {
+            "Ref": "MyAppServerLaunchTemplate"
+          },
+          "Version": {
+            "Fn::GetAtt": [
+              "MyAppServerLaunchTemplate",
+              "LatestVersionNumber"
+            ]
+          }
+        },
+        "VPCZoneIdentifier": [
+          {
+            "Ref": "MyPrivateSubnet1"
+          },
+          {
+            "Ref": "MyPrivateSubnet2"
+          },
+          {
+            "Ref": "MyPrivateSubnet3"
+          }
+        ],
+        "TargetGroupARNs": [
+          {
+            "Ref": "MyAppServerELBTarget"
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": { "Fn::Sub": "${TypeOfStack}-MyAppServerASG" },
+            "PropagateAtLaunch": true
+          }
+        ]
+      }
+    },
+    "MyAppServerELB": {
+      "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
+      "Properties": {
+        "IpAddressType": "ipv4",
+        "Scheme": "internal",
+        "Name": { "Fn::Sub": "${TypeOfStack}-MyAppServerELB" },
+        "SecurityGroups": [
+          {
+            "Ref": "MyAppServerASGSecurityGroup"
+          }
+        ],
+        "Subnets": [
+          {
+            "Ref": "MyPrivateSubnet1"
+          },
+          {
+            "Ref": "MyPrivateSubnet2"
+          },
+          {
+            "Ref": "MyPrivateSubnet3"
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": { "Fn::Sub": "${TypeOfStack}-MyAppServerELB" }
+          }
+        ]
+      }
+    },
+    "MyAppServerELBTarget": {
+      "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+      "Properties": {
+        "Name": { "Fn::Sub": "${TypeOfStack}-MyAppServerELBTarget" },
+        "HealthCheckEnabled": true,
+        "HealthCheckIntervalSeconds": 10,
+        "HealthCheckPath": "/",
+        "HealthCheckPort": 80,
+        "Protocol": "HTTP",
+        "Port": 80,
+        "VpcId": {
+          "Ref": "MyVPC"
+        },
+        "TargetType": "instance",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": { "Fn::Sub": "${TypeOfStack}-MyAppServerELBTarget" }
+          }
+        ]
+      }
+    },
+    "MyAppServerELBListener": {
+      "Type": "AWS::ElasticLoadBalancingV2::Listener",
+      "Properties": {
+        "DefaultActions": [
+          {
+            "Type": "forward",
+            "TargetGroupArn": {
+              "Ref": "MyAppServerELBTarget"
+            }
+          }
+        ],
+        "LoadBalancerArn": {
+          "Ref": "MyAppServerELB"
+        },
+        "Port": 80,
+        "Protocol": "HTTP"
+      }
+    },
+    "MyBastionLaunchTemplate": {
+      "Type": "AWS::EC2::LaunchTemplate",
+      "Properties": {
+        "LaunchTemplateName": { "Fn::Sub": "${TypeOfStack}-MyBastionLaunchTemplate" },
+        "LaunchTemplateData": {
+          "ImageId": {
+            "Ref": "MyImageId"
+          },
+          "KeyName": {
+            "Ref": "MyKeyName"
+          },
+          "InstanceType": {
+            "Ref": "MyInstanceType"
+          },
+          "SecurityGroupIds": [
+            {
+              "Ref": "MyBastionSecurityGroup"
+            }
+          ]
+        }
+      }
+    },
+    "MyBastionASG": {
+      "Type": "AWS::AutoScaling::AutoScalingGroup",
+      "DependsOn": "MyVPCGatewayAttachment",
+      "Properties": {
+        "AutoScalingGroupName": { "Fn::Sub": "${TypeOfStack}-MyBastionASG" },
+        "MaxSize": 1,
+        "MinSize": 1,
+        "DesiredCapacity": 1,
+        "HealthCheckGracePeriod": 300,
+        "LaunchTemplate": {
+          "LaunchTemplateId": {
+            "Ref": "MyBastionLaunchTemplate"
+          },
+          "Version": {
+            "Fn::GetAtt": [
+              "MyBastionLaunchTemplate",
+              "LatestVersionNumber"
+            ]
+          }
+        },
+        "VPCZoneIdentifier": [
+          {
+            "Ref": "MyPublicSubnet1"
+          },
+          {
+            "Ref": "MyPublicSubnet2"
+          },
+          {
+            "Ref": "MyPublicSubnet3"
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": { "Fn::Sub": "${TypeOfStack}-MyBastionASG" },
+            "PropagateAtLaunch": true
+          }
+        ]
+      }
+    },
+    "MyBastionSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Bastion Security Group",
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {"Ref":"MyIp"},
+            "FromPort": 22,
+            "IpProtocol": "tcp",
+            "ToPort": 22
+          }
+        ],
+        "VpcId": {
+          "Ref": "MyVPC"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": { "Fn::Sub": "${TypeOfStack}-MyBastionSecurityGroup" }
+          }
+        ]
+      }
+    }
+  }
+}
